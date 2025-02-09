@@ -119,29 +119,24 @@ int main()
     gpio_set_irq_enabled_with_callback(Botao_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     bool collor = true;
         
-    // Atualiza o conteúdo do display com animações
-    ssd1306_fill(&ssd, !collor); // Limpa o display
-    ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !collor); // Desenha um retângulo
-    ssd1306_draw_string(&ssd, "Paulo Cesar", 20, 10); // Desenha uma string
-    ssd1306_draw_string(&ssd, "Embarcatech", 20, 30); // Desenha uma string
-    ssd1306_draw_string(&ssd, "tic 370100993", 15, 48); // Desenha uma string      
-    ssd1306_send_data(&ssd); // Atualiza o display
     
     while (1)
     {
-        cor = !cor;
-        ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !collor); // Desenha um retângulo
+        collor = !collor;
+        //atualiza o conteudo do display 
+        ssd1306_fill(&ssd, !collor); // Limpa o display
+        ssd1306_rect(&ssd, 3, 3, 122, 58, collor, !collor); // Desenha um retângulo
+        
         if (stdio_usb_connected())
         { // Certifica-se de que o USB está conectado
             if (scanf("%c", &c) == 1)
             {
-                ssd1306_fill(&ssd, !collor); // Limpa o display
                 ssd1306_draw_char(&ssd, c, 50, 30);//desenha o caracter digitado via serial monitor
                 Imprime_5X5(c);//Numero na matriz 5x5
             }
         }
         
-
+        ssd1306_send_data(&ssd); // Atualiza o display
        
     }
 
