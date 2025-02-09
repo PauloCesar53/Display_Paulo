@@ -118,8 +118,6 @@ int main()
     // configurando a interrupção com botão na descida para o botão B
     gpio_set_irq_enabled_with_callback(Botao_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     bool collor = true;
-        
-    
     while (1)
     {
         collor = !collor;
@@ -133,10 +131,26 @@ int main()
             {
                 ssd1306_draw_char(&ssd, c, 50, 30);//desenha o caracter digitado via serial monitor
                 Imprime_5X5(c);//Numero na matriz 5x5
+                
             }
+           
         }
+        if (aux_B == 1)
+        {
+            ssd1306_draw_string(&ssd, "LED azul off", 8, 10); // Desenha uma string
+        }else{
+            ssd1306_draw_string(&ssd, "LED azul on", 8, 10); // Desenha uma string;
+        }
+        if (aux_G == 1){
+            ssd1306_draw_string(&ssd, "LED verde off", 8, 20); // Desenha uma string
+        }else
+        {
+            ssd1306_draw_string(&ssd, "LED verde on", 8, 20); // Desenha uma string;
+        }
+
         
         ssd1306_send_data(&ssd); // Atualiza o display
+        
        
     }
 
@@ -212,10 +226,10 @@ void gpio_irq_handler(uint gpio, uint32_t events)
         led_on_G= !led_on_G;
         gpio_put(LED_PIN_G, led_on_G);
         if(led_on_G){
-            printf("LED verde ligado\n");
+            printf("LED verde ligado\n%d",aux_G);
             aux_G++;
         }else{
-            printf("LED verde desligado\n");
+            printf("LED verde desligado\n%d",aux_G);
             aux_G--;
         }
         //aux++;
@@ -228,10 +242,10 @@ void gpio_irq_handler(uint gpio, uint32_t events)
         led_on_B= !led_on_B;
         gpio_put(LED_PIN_B, led_on_B);
         if(led_on_B){
-            printf("LED azul ligado\n");
+            printf("LED azul ligado\n%d",aux_B);
             aux_B++;
         }else{
-            printf("LED azul desligado\n");
+            printf("LED azul desligado\n%d",aux_B);
             aux_B--;
         }
     }
