@@ -14,6 +14,15 @@
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
 #include "ws2812.pio.h"
+#include "hardware/i2c.h"
+#include "inc/ssd1306.h"
+#include "inc/font.h"
+
+//definições da UART
+#define I2C_PORT i2c1
+#define I2C_SDA 14
+#define I2C_SCL 15
+#define endereco 0x3C
 
 #define IS_RGBW false
 #define NUM_PIXELS 25
@@ -28,6 +37,10 @@
 //definição de variáveis que guardarão o estado atual de cada lED
 bool led_on_G = false;// LED verde desligado
 bool led_on_B = false;// LED azul desligado
+int aux_G= 1;//variável auxiliar para indicar mudança de estado no display 
+int aux_B= 1;
+
+
 // Variável global para armazenar a cor (Entre 0 e 255 para intensidade)
 uint8_t led_r = 0;  // Intensidade do vermelho
 uint8_t led_g = 0; // Intensidade do verde
@@ -37,6 +50,7 @@ uint8_t led_b = 5; // Intensidade do azul
 static volatile int aux = 1; // posição do numero impresso na matriz, inicialmente imprime numero 5
 static volatile uint32_t last_time_A = 0; // Armazena o tempo do último evento para Bot A(em microssegundos)
 static volatile uint32_t last_time_B = 0; // Armazena o tempo do último evento para Bot B(em microssegundos)
+char c=' ';
 
 bool led_buffer[NUM_PIXELS];// Variável (protótipo)
 bool buffer_Numeros[Frames][NUM_PIXELS];// // Variável (protótipo) 
@@ -48,9 +62,26 @@ static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b);
 void set_one_led(uint8_t r, uint8_t g, uint8_t b);//liga os LEDs escolhidos 
 
 void gpio_irq_handler(uint gpio, uint32_t events);// protótipo função interrupção para os botões A e B com condição para deboucing
+void Imprime_5X5(char car);// protótipo função que colocar números de zero a 9 na 5x5
 
 int main()
 {
+    //Inicializando I2C . Usando 400Khz.
+    i2c_init(I2C_PORT, 400 * 1000);
+
+    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);// Definindo a função do pino GPIO para I2C
+    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);// Definindo a função do pino GPIO para I2C
+    gpio_pull_up(I2C_SDA);// definindo como resistência de pull up
+    gpio_pull_up(I2C_SCL);// definindo como resistência de pull up
+    ssd1306_t ssd;// Inicializa a estrutura do display
+    ssd1306_init(&ssd, WIDTH, HEIGHT, false, endereco, I2C_PORT);// Inicializa o display
+    ssd1306_config(&ssd);// Configura o display
+    ssd1306_send_data(&ssd);// Envia os dados para o display
+    bool cor = true;
+    // Limpa o display. O display inicia com todos os pixels apagados.
+    ssd1306_fill(&ssd, false);
+    ssd1306_send_data(&ssd);
+  
     PIO pio = pio0;
     int sm = 0;
     uint offset = pio_add_program(pio, &ws2812_program);
@@ -89,6 +120,15 @@ int main()
 
     while (1)
     {
+        if (stdio_usb_connected())
+        { // Certifica-se de que o USB está conectado
+            if (scanf("%c", &c) == 1)
+            {
+                ssd1306_draw_char(&ssd, c, 50, 30);//desenha o caracter digitado via serial monitor
+                Imprime_5X5(c);//Numero na matriz 5x5
+            }
+        }
+        
 
        
     }
@@ -166,8 +206,10 @@ void gpio_irq_handler(uint gpio, uint32_t events)
         gpio_put(LED_PIN_G, led_on_G);
         if(led_on_G){
             printf("LED verde ligado\n");
+            aux_G++;
         }else{
             printf("LED verde desligado\n");
+            aux_G--;
         }
         //aux++;
         //atualiza_buffer(led_buffer, buffer_Numeros, aux); /// atualiza buffer
@@ -180,11 +222,47 @@ void gpio_irq_handler(uint gpio, uint32_t events)
         gpio_put(LED_PIN_B, led_on_B);
         if(led_on_B){
             printf("LED azul ligado\n");
+            aux_B++;
         }else{
             printf("LED azul desligado\n");
+            aux_B--;
         }
-        //aux--;
-        //atualiza_buffer(led_buffer, buffer_Numeros, aux); // atualiza buffer
-        ///set_one_led(led_r, led_g, led_b);               // forma número na matriz
     }
+}
+//função que colocar números de zero a 9 na 5x5
+void Imprime_5X5(char car){
+    if(car == '0'){
+        atualiza_buffer(led_buffer, buffer_Numeros, 0); // atualiza buffer para numero 1
+        set_one_led(led_r, led_g, led_b);//forma número 1 namatriz 
+    }else if(car == '1'){
+        atualiza_buffer(led_buffer, buffer_Numeros, 1); // atualiza buffer para numero 1
+        set_one_led(led_r, led_g, led_b);//forma número 1 namatriz 
+    }else if(car == '2'){
+        atualiza_buffer(led_buffer, buffer_Numeros, 2); // atualiza buffer para numero 1
+        set_one_led(led_r, led_g, led_b);//forma número 1 namatriz 
+    }else if(car == '3'){
+        atualiza_buffer(led_buffer, buffer_Numeros, 3); // atualiza buffer para numero 1
+        set_one_led(led_r, led_g, led_b);//forma número 1 namatriz 
+    }else if(car == '4'){
+        atualiza_buffer(led_buffer, buffer_Numeros, 4); // atualiza buffer para numero 1
+        set_one_led(led_r, led_g, led_b);//forma número 1 namatriz 
+    }else if(car == '5'){
+        atualiza_buffer(led_buffer, buffer_Numeros, 5); // atualiza buffer para numero 1
+        set_one_led(led_r, led_g, led_b);//forma número 1 namatriz 
+    }else if(car == '6'){
+        atualiza_buffer(led_buffer, buffer_Numeros, 6); // atualiza buffer para numero 1
+        set_one_led(led_r, led_g, led_b);//forma número 1 namatriz 
+    }else if(car == '7'){
+        atualiza_buffer(led_buffer, buffer_Numeros, 7); // atualiza buffer para numero 1
+        set_one_led(led_r, led_g, led_b);//forma número 1 namatriz 
+    }else if(car == '8'){
+        atualiza_buffer(led_buffer, buffer_Numeros, 8); // atualiza buffer para numero 1
+        set_one_led(led_r, led_g, led_b);//forma número 1 namatriz 
+    }else if(car == '9'){
+        atualiza_buffer(led_buffer, buffer_Numeros, 9); // atualiza buffer para numero 1
+        set_one_led(led_r, led_g, led_b);//forma número 1 namatriz 
+    }else{
+
+    }
+
 }
