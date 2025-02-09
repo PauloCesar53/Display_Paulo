@@ -9,9 +9,12 @@ Repositório criado para versionamento da tarefa da aula  do dia 3 de fevereiro
    - Abra o projeto no VS Code, na pasta Tarefa_aula_03-02 
    - Vá até a extensão do **Raspberry pi pico project** e após importar os projetos  clique em **Compile Project** 
 3. Coloque a placa em modo BOOTSEL e copie o arquivo `ws2832_1.uf2` que está na pasta build, para a BitDogLab conectado via USB.
+4. Ao iniciar o serial monitor certifique-se que a opção 'Line ending' esteja com a caixa 'Nome' selecionada.
 
 
-**OBS: Devem importar os projetos para gerar a pasta build, pois a mesma não foi inserida no repositório**
+**OBS1:Ao iniciar o serial monitor o Display para de temporariamente de atualizar pois espera receber um caractere para aualização posterior**
+
+**OBS2: Devem importar os projetos para gerar a pasta build, pois a mesma não foi inserida no repositório**
 
 ## Emulação com Wokwi
 
