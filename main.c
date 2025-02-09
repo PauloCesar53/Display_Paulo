@@ -1,8 +1,10 @@
 /*
  *                    Funcionamento do programa 
- *O programa mostra números de 0 a 9 na matriz de led 5x5, sendo o usuário capaz
- * de incrementar um número ao apertar o botão A e decrementar um numéro ao apertar
- *  o botão B da BitDogLab, como o led vermelho RGB (gpio 13) piscando 5 vezes por segundo.
+ *O programa mostra números de 0 a 9 na matriz de lEDS 5x5, a depender da entrada de um desses 
+ números no serial monitor,ao apertar o botão A o LED verde muda de estado, com a informação 
+ sendo printada no serial monitor e no display da BitDogLab, o Botão B tem comportamento 
+ similar ao botão A mas para funcionamento do LED Azul. Os caracteres inseridos via serial monitor 
+ aparecem no Display 
  *                    Tratamento de deboucing com interrupção 
  * A ativação dos botões A e B são feitas através de uma rotina de interrupção, sendo
  * implementada condição para tratar o efeito boucing na rotina.
@@ -27,7 +29,6 @@
 #define IS_RGBW false
 #define NUM_PIXELS 25
 #define WS2812_PIN 7
-#define tempo 200 // para led vermelho piscar 5 vezes por segundo
 #define Frames 10
 #define LED_PIN_G 11
 #define LED_PIN_B 12
@@ -37,7 +38,7 @@
 //definição de variáveis que guardarão o estado atual de cada lED
 bool led_on_G = false;// LED verde desligado
 bool led_on_B = false;// LED azul desligado
-int aux_G= 1;//variável auxiliar para indicar mudança de estado no display 
+int aux_G= 1;//variável auxiliar para indicar mudança de estado do LED no display 
 int aux_B= 1;
 
 
@@ -63,6 +64,7 @@ void set_one_led(uint8_t r, uint8_t g, uint8_t b);//liga os LEDs escolhidos
 
 void gpio_irq_handler(uint gpio, uint32_t events);// protótipo função interrupção para os botões A e B com condição para deboucing
 void Imprime_5X5(char car);// protótipo função que colocar números de zero a 9 na 5x5
+void Estado_LED_Display(int a , int b, ssd1306_t c);// protótipo função que imprime estado LEDs no Display
 
 int main()
 {
@@ -109,9 +111,6 @@ int main()
     gpio_set_dir(Botao_B, GPIO_IN); // configura como entrada
     gpio_pull_up(Botao_B);          // Habilita o pull-up interno
 
-    atualiza_buffer(led_buffer, buffer_Numeros, aux); // atualiza buffer para numero 5
-    set_one_led(led_r, led_g, led_b);               // forma numero 5 primeira vez
-
     // configurando a interrupção com botão na descida para o botão A
     gpio_set_irq_enabled_with_callback(Botao_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
@@ -124,38 +123,24 @@ int main()
         //atualiza o conteudo do display 
         ssd1306_fill(&ssd, !collor); // Limpa o display
         ssd1306_rect(&ssd, 3, 3, 122, 58, collor, !collor); // Desenha um retângulo
-        
         if (stdio_usb_connected())
         { // Certifica-se de que o USB está conectado
             if (scanf("%c", &c) == 1)
             {
+                Estado_LED_Display(aux_B,aux_G,ssd);//imprime estado LEDs no Display
                 ssd1306_draw_char(&ssd, c, 50, 30);//desenha o caracter digitado via serial monitor
                 Imprime_5X5(c);//Numero na matriz 5x5
                 
             }
-           
+            Estado_LED_Display(aux_B,aux_G,ssd);//imprime estado LEDs no Display
         }
-        if (aux_B == 1)
-        {
-            ssd1306_draw_string(&ssd, "LED azul off", 8, 10); // Desenha uma string
-        }else{
-            ssd1306_draw_string(&ssd, "LED azul on", 8, 10); // Desenha uma string;
-        }
-        if (aux_G == 1){
-            ssd1306_draw_string(&ssd, "LED verde off", 8, 20); // Desenha uma string
-        }else
-        {
-            ssd1306_draw_string(&ssd, "LED verde on", 8, 20); // Desenha uma string;
-        }
-
-        
+        Estado_LED_Display(aux_B,aux_G,ssd);//imprime estado LEDs no Display
         ssd1306_send_data(&ssd); // Atualiza o display
-        
-       
     }
 
     return 0;
 }
+
 bool led_buffer[NUM_PIXELS] = { //Buffer para armazenar quais LEDs estão ligados matriz 5x5
     0, 0, 0, 0, 0,
     0, 0, 0, 0, 0,
@@ -223,29 +208,26 @@ void gpio_irq_handler(uint gpio, uint32_t events)
     if (gpio_get(Botao_A) == 0 &&  (current_time - last_time_A) > 200000)//200ms de boucing adiconado como condição 
     { // se botão A for pressionado e aux<9 incrementa aux em 1(próximo número) 
         last_time_A = current_time; // Atualiza o tempo do último evento
-        led_on_G= !led_on_G;
+        led_on_G= !led_on_G;//altera estado LED
         gpio_put(LED_PIN_G, led_on_G);
         if(led_on_G){
-            printf("LED verde ligado\n%d",aux_G);
-            aux_G++;
+            printf("LED verde ligado\n");//printa estado do LED serial monitor
+            aux_G++;//auxiliar para imprimir estado LED display
         }else{
-            printf("LED verde desligado\n%d",aux_G);
-            aux_G--;
+            printf("LED verde desligado\n");//printa estado do LED serial monitor
+            aux_G--;//auxiliar para imprimir estado LED display
         }
-        //aux++;
-        //atualiza_buffer(led_buffer, buffer_Numeros, aux); /// atualiza buffer
-        //set_one_led(led_r, led_g, led_b);               // forma numero na matriz
     }
     if (gpio_get(Botao_B) == 0  && (current_time - last_time_B) > 200000)//200ms de boucing adiconado como condição 
     { // se botão B for pressionado e aux>0 decrementa aux em 1(número anterior)
         last_time_B = current_time; // Atualiza o tempo do último evento
-        led_on_B= !led_on_B;
+        led_on_B= !led_on_B;//altera estado LED
         gpio_put(LED_PIN_B, led_on_B);
         if(led_on_B){
-            printf("LED azul ligado\n%d",aux_B);
+            printf("LED azul ligado\n");//printa estado do LED serial monitor
             aux_B++;
         }else{
-            printf("LED azul desligado\n%d",aux_B);
+            printf("LED azul desligado\n");//printa estado do LED serial monitor
             aux_B--;
         }
     }
@@ -286,4 +268,23 @@ void Imprime_5X5(char car){
 
     }
 
+}
+// função que imprime estado LEDs no Display
+void Estado_LED_Display(int a , int b, ssd1306_t c){
+    if (a == 1)
+    {
+        ssd1306_draw_string(&c, "LED azul off", 8, 10); // Desenha uma string
+    }
+    else
+    {
+        ssd1306_draw_string(&c, "LED azul on  ", 8, 10); // Desenha uma string;
+    }
+    if (b== 1)
+    {
+        ssd1306_draw_string(&c, "LED verde off", 8, 20); // Desenha uma string
+    }
+    else
+    {
+        ssd1306_draw_string(&c, "LED verde on  ", 8, 20); // Desenha uma string;
+    }
 }
