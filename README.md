@@ -27,7 +27,7 @@ Para testar os programas sem hardware físico, você pode utilizar o **Wokwi** p
    
 ## Vídeo de demonstração no youtube 
 
-inserir link
+https://youtu.be/Liiw_gezYSE?si=HI2fiTCb2FVzF0hg
 
 
 ## Colaboradores
